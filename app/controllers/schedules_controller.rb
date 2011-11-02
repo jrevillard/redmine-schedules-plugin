@@ -81,7 +81,7 @@ class SchedulesController < ApplicationController
         @schedule_default ||= ScheduleDefault.new 
         @schedule_default.weekday_hours ||= [0,0,0,0,0,0,0] 
         @schedule_default.user_id = @user.id
-        @calendar = Redmine::Helpers::Calendar.new(Date.today, current_language, :week)
+        @calendar = Redmine::Helpers::Calendar.new(Date.today, current_language, :month)
     end
 
 
@@ -100,7 +100,7 @@ class SchedulesController < ApplicationController
         @indexed_users = @users.index_by { |user| user.id }
         @defaults = get_defaults(user_ids).index_by { |default| default.user_id }
         @defaults.delete_if { |user_id, default| !default.weekday_hours.detect { |weekday| weekday != 0 }}
-        @calendar = Redmine::Helpers::Calendar.new(Date.today, current_language, :week)
+        @calendar = Redmine::Helpers::Calendar.new(Date.today, current_language, :month)
     end
 
 
@@ -200,14 +200,13 @@ class SchedulesController < ApplicationController
     # the schedule. For each change, remove the old entry and save the new one
     # assuming sufficient access by the modifying user.
     def save_scheduled_entries
-    
         # Get the users and projects involved in this save 
         user_ids = params[:schedule_entry].collect { |user_id, dates_projects_hours| user_id }
         users = User.find(:all, :conditions => "id IN ("+user_ids.join(',')+")").index_by { |user| user.id }
         project_ids = params[:schedule_entry].values.first.values.first.keys
         projects = Project.find(:all, :conditions => "id IN ("+project_ids.join(',')+")").index_by { |project| project.id }
         defaults = get_defaults(user_ids).index_by { |default| default.user_id }
-        
+
         # Take a look at a user and their default schedule
         params[:schedule_entry].each do |user_id, dates_projects_hours|
             user = users[user_id.to_i]
@@ -227,6 +226,10 @@ class SchedulesController < ApplicationController
                 # Look through the entries for each project, assuming access 
                 entries = Array.new
                 projects_hours.each do |project_id, hours|
+                    if hours == ""
+                        hours = 0.0
+                    end
+                  
                     project = projects[project_id.to_i]
                     if User.current.allowed_to?(:edit_all_schedules, project) || (User.current == user && User.current.allowed_to?(:edit_own_schedules, project)) || User.current.admin?
 
@@ -474,7 +477,7 @@ class SchedulesController < ApplicationController
         @date = Date.parse(params[:date]) if params[:date]
         @date ||= Date.civil(params[:year].to_i, params[:month].to_i, params[:day].to_i) if params[:year] && params[:month] && params[:day]
         @date ||= Date.today
-        @calendar = Redmine::Helpers::Calendar.new(@date, current_language, :week)
+        @calendar = Redmine::Helpers::Calendar.new(@date, current_language, :month)
         
     rescue ActiveRecord::RecordNotFound
         render_404

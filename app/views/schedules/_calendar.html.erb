@@ -12,12 +12,33 @@
     </div>
 <% end %>
 
+<% 
+    calendar_period = (calendar.enddt - calendar.startdt).to_i
+    # Ten days per row...
+    calendar_loops = (calendar_period / 7)
+    # Stragglers ... 
+    # calendar_loops += 1
+
+    # Set a variable start / end date...
+    current_startdt = calendar.startdt;
+    current_enddt = calendar.startdt + 6.days
+
+    calendar_loops.times do 
+%>
+
 <table class="cal schedule_entry_cal">
 	<thead>
 		<tr>
             <% if !@focus.nil? %><th></th><% end %>
-			<% (calendar.startdt..calendar.enddt).each do |day| %>
-				<th><%= day_name(day.wday) %>, <br/><%= month_name(day.month) %> <%= day.day %></th>
+            <% count = 0 %>
+			<% (current_startdt..current_enddt).each do |day| %>
+			    <% if (count+=1)%10 == 0 %>
+			        </tr>
+			        <tr>
+				        <th><%= day_name(day.wday) %>, <br/><%= month_name(day.month) %> <%= day.day %></th>
+				<% else %>
+				    <th> <%= day_name(day.wday) %>, <br/><%= month_name(day.month) %> <%= day.day %></th>
+				<% end %>
 			<% end %>
 		</tr>
 	</thead>
@@ -31,8 +52,9 @@
                 schedule_entries_by_focus = @entries.group_by {|entry| entry.project_id}
                 focus_objects = @projects
             end
-            
+
             focus_objects.each do |focus_object|
+
                 entries = schedule_entries_by_focus[focus_object.id]
                 @user = focus_object if @focus == "users"
                 @project = focus_object if @focus == "projects"
@@ -42,7 +64,7 @@
                         <%= link_to @project, :controller => 'schedules', :action => 'index', :date => @date, :project_id => @project unless @project.nil? %>
                         <%= link_to @user, :controller => 'schedules', :action => 'index', :date => @date, :user_id => @user unless @user.nil? %>
                     </th>
-                    <% (calendar.startdt..calendar.enddt).each do |day| %>
+                    <% (current_startdt..current_enddt).each do |day| %>
                         <td class="even<%= ' today' if Date.today == day %> <%= ' holiday' if day.holiday?($holiday_locale, :observed) %>">
                             <ul>
                                 <% if !schedule_entries_by_day.nil? && !schedule_entries_by_day[day].nil? %>
@@ -64,11 +86,13 @@
         <% else %>
             <% schedule_entries_by_day = @entries.group_by {|entry| entry.date} %>
     		<tr>
-    			<% (calendar.startdt..calendar.enddt).each do |day| %>
-                                <td class="even<%= ' today' if Date.today == day %> <%= ' holiday' if day.holiday?($holiday_locale, :observed) %>">
+    			<% (current_startdt..current_enddt).each do |day| %>
+                    <td class="even<%= ' today' if Date.today == day %> <%= ' holiday' if day.holiday?($holiday_locale, :observed) %>">
     					<ul>
     						<% if !schedule_entries_by_day[day].nil? %>
-    							<% schedule_entries_by_day[day].sort.each do |entry| %>
+
+                                <!-- TODO: Fix sorting... schedule_entries_by_day[day].sort.each  -->
+    							<% schedule_entries_by_day[day].each do |entry| %>
     								<%= render :partial => 'schedules/schedule_entry', :locals => {:entry => entry} %>
     							<% end %>
     						<% end %>
@@ -87,7 +111,7 @@
             <% schedule_entries_by_day ||= @entries.group_by {|entry| entry.date} %>
             <% if !@focus.nil? %><th></th><% end %>
             <% entries_by_day = schedule_entries_by_day %>
-            <% (calendar.startdt..calendar.enddt).each do |day| %>
+            <% (current_startdt..current_enddt).each do |day| %>
                 <th>
                     <% sum = entries_by_day[day].nil? ? 0 : entries_by_day[day].collect(&:hours).sum %>
                     <%= sum if sum > 0 %>
@@ -98,3 +122,11 @@
         </tr>
     </tfoot>
 </table>
+
+<% 
+    # Update the dates for the next loop
+    current_startdt = current_enddt + 1.days
+    current_enddt = current_startdt + 6.days
+    end 
+%>
+
