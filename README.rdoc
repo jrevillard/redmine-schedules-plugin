@@ -9,3 +9,7 @@ http://code.dunae.ca/holidays/ or through "gem install holidays").
 
 Created by Gossamer Threads Inc. (http://www.gossamer-threads.com)
 Primary developer: Brad Beattie
+
+NOTE: This is a fork of the original plugin. This fork changes the schedule view from weekly to monthly. USE AT YOUR OWN RISK.
+
+Original plugin is here; https://github.com/bradbeattie/redmine-schedules-plugin
