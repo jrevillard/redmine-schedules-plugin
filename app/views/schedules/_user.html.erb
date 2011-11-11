@@ -1,17 +1,26 @@
 <%
 	project_entries = @entries.group_by {|entry| entry.project_id}
 	closed_entries = @closed_entries.index_by {|entry| entry.date.ajd}
+	current_start = calendar.startdt
+	current_end = current_start+6
 %>
+<% 4.times do |tmp|%>
 <table class="cal schedule_entry_grid">
 	<thead>
-		<tr><td></td><% 7.times do |i| %><th><%= day_name( (calendar.first_wday+i)%7 )%></th><% end %></tr>
+	    <%tmp_start = current_start%>
+		<tr><td></td>
+		<% 7.times do |i| %>
+		    <th>
+		        <%=day_name(tmp_start.wday)%> <%=tmp_start.day%>/<%=tmp_start.month%>
+		    </th>
+		<% 	tmp_start += 1 end %></tr>
 	</thead>
 	<tbody>
 		<% @projects.each do |project| %>
 			<% date_entries = project_entries[project.id].nil? ? [] : project_entries[project.id].index_by {|entry| entry.date.ajd} %>
 			<tr>
 				<%= "<th>#{project}</th>" %>
-				<% (calendar.startdt..calendar.enddt).each do |day| %>
+				<% (current_start..current_end).each do |day| %>
                                         <td class="even<%= ' today' if Date.today == day %> <%= ' holiday' if day.holiday?($holiday_locale, :observed) %>">
 						<%
 							if date_entries[day.ajd].nil?
@@ -36,7 +45,7 @@
 		<% end %>
 		<tr>
 			<th><em><%= l(:label_schedules_unavailable) %></em></th>
-			<% (calendar.startdt..calendar.enddt).each do |day| %>
+			<% (current_start..current_end).each do |day| %>
 				<td class="odd">
 					<%
 						if closed_entries[day.ajd].nil?
@@ -60,7 +69,7 @@
 	<tfoot>
 		<tr>
 			<th><%= l(:label_total) %></th>
-			<% (calendar.startdt..calendar.enddt).each do |day| %>
+			<% (current_start..current_end).each do |day| %>
                 <th class="even<%= ' today' if Date.today == day %> <%= ' holiday' if day.holiday?($holiday_locale, :observed) %>">
 					<% sum = @entries.collect {|e| e.hours if e.date == day }.compact.sum %>
 					<% sum += closed_entries[day.ajd].hours unless closed_entries[day.ajd].nil? %>
@@ -70,3 +79,8 @@
 		</tr>
 	</tfoot>
 </table>
+<%
+current_start = current_end +1;
+current_end = current_end + 7;
+
+end%>
