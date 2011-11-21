@@ -23,7 +23,8 @@
     current_startdt = calendar.startdt;
     current_enddt = calendar.startdt + 6.days
 
-    calendar_loops.times do 
+    counter = 0
+    until counter == calendar_loops do 
 %>
 
 <table class="cal schedule_entry_cal">
@@ -127,6 +128,7 @@
     # Update the dates for the next loop
     current_startdt = current_enddt + 1.days
     current_enddt = current_startdt + 6.days
+    counter += 1
     end 
 %>
 
